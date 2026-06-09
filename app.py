@@ -326,21 +326,21 @@ api_url = st.secrets["API_URL"]
 
 if st.button("Lancer le test"):
     payload = {
-        "harvest_year": int(annee),
-        "DEPT_ID": departement
+        "DEPT_ID": departement,
+        "harvest_year": int(annee)
     }
 
 ########### RECEPTION DES REPONSES ############
 
-    #response = requests.get(
-        #api_url,
-        #params=payload
-    #).json()
+    response = requests.get(
+        f"{api_url}/predict",
+        params=payload
+    ).json()
 
-    response_test = {'prediction':1000, 'reel':200}
+    st.json(response)
 
-    prediction = response_test["prediction"]
-    reel = response_test["reel"]
+    prediction = response["prediction"]
+    reel = response["reel"]
 
 ########### AFFICHAGE RESULTATS ###########
 
