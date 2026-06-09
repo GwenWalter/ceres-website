@@ -2,14 +2,17 @@ import streamlit as st
 
 
 import pandas as pd
-import datetime
 import requests
 
 '''
 # 🌾​ Ceres AI
-### Prédiction de la production de blé en France par département grâce au machine learning
-
+### Prédiction du rendement de blé en France par département grâce au machine learning
 '''
+st.set_page_config(
+    page_title="Prediction Blé", # => Quick reference - Streamlit
+    page_icon="​🌾​",
+    layout="centered", # wide
+    initial_sidebar_state="auto") # collapsed
 
 ########### COUPLES(dept/annee) DISPO DANS X_test ###########
 
@@ -339,28 +342,70 @@ if st.button("Lancer le test"):
     prediction = response_test["prediction"]
     reel = response_test["reel"]
 
+########### AFFICHAGE RESULTATS ###########
+
     col1, col2 = st.columns(2)
 
     with col1:
-        st.subheader("🔮 Prédiction")
-        st.metric(
-            label="Rendement estimé",
-            value=f"{prediction} tonnes"
-        )
+        with st.container(border=True):
+            st.subheader("🔮 Prédiction")
+            st.metric(
+                label="Rendement estimé",
+                value=f"{prediction} tonnes"
+            )
 
     with col2:
-        st.subheader("🌾 Réel")
-        st.metric(
-            label="Rendement réel",
-            value=f"{reel} tonnes"
-        )
+        with st.container(border=True):
+            st.subheader("🌾 Réel")
+            st.metric(
+                label="Rendement observé",
+                value=f"{reel} tonnes"
+            )
+
+    ########### ANALYSE ###########
 
     diff = prediction - reel
     erreur_pct = (diff / reel) * 100
 
     st.divider()
 
-    st.subheader("📊 Analyse")
+    with st.container(border=True):
+        st.subheader("📊 Analyse de la performance")
 
-    st.write(f"Écart : **{diff:.1f} tonnes**")
-    st.write(f"Erreur : **{erreur_pct:.2f}%**")
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            label="📉 Écart (Prédiction - Réel)",
+            value=f"{diff:.1f} tonnes",
+            delta=f"{erreur_pct:.1f}%"
+        )
+
+    with col2:
+        st.metric(
+            label="📊 Erreur relative",
+            value=f"{abs(erreur_pct):.2f} %"
+        )
+
+    ########### METRIQUES MODELE ###########
+
+    st.divider()
+
+    with st.container(border=True):
+        st.subheader("🧠 Performance du modèle")
+
+    col1, col2 = st.columns(2)
+
+    with col1:
+        st.metric(
+            label="MAE (erreur moyenne)",
+            value="4.72 tonnes"
+        )
+        st.caption("En moyenne, le modèle se trompe de 4.72 tonnes")
+
+    with col2:
+        st.metric(
+            label="R² (explication des variations)",
+            value="85%"
+        )
+        st.caption("Le modèle explique 85% des variations du rendement")
