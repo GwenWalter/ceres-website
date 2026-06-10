@@ -3,15 +3,18 @@ import streamlit as st
 
 import pandas as pd
 import requests
+import time
 
 '''
 # 🌾​ Ceres AI
-### Prédiction du rendement de blé en France par département grâce au machine learning
 '''
+
+st.sidebar.write("")
+
 st.set_page_config(
     page_title="Prediction Blé", # => Quick reference - Streamlit
     page_icon="​🌾​",
-    layout="centered", # wide
+    layout="wide", # wide
     initial_sidebar_state="auto") # collapsed
 
 ########### COUPLES(dept/annee) DISPO DANS X_test ###########
@@ -299,9 +302,31 @@ df_couples = pd.DataFrame(couples)
 annees = sorted(df_couples["harvest_year"].unique())
 
 
+########### SIDE BAR ###############
+
+########### COULEUR ###############
+
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    background-color: #FAF3DD;
+}
+</style>
+""", unsafe_allow_html=True)
+
+########### TITLE #################
+
+st.sidebar.markdown("""
+    # Sélection des données 🔍
+
+    ### Sélectionnez un département et une année pour lancer une prédiction.
+""")
+
+st.sidebar.write("")
+
 ########### SELECT BOXES ###########
 
-annee = st.selectbox(
+annee = st.sidebar.selectbox(
     "📅​ Choisis une année",
     options=annees
 )
@@ -314,17 +339,18 @@ departements = sorted(
     ].unique()
 )
 
-departement = st.selectbox(
+departement = st.sidebar.selectbox(
     "🇫🇷​ Choisis un département",
     options=departements
 )
 
+st.sidebar.write("")
 
 ########### ENVOIE DE LA REQUETE A L'API ############
 
 api_url = st.secrets["API_URL"]
 
-if st.button("Lancer le test"):
+if st.sidebar.button("Lancer la prédiction"):
     payload = {
         "DEPT_ID": departement,
         "harvest_year": int(annee)
@@ -387,25 +413,21 @@ if st.button("Lancer le test"):
             value=f"{abs(erreur_pct):.2f} %"
         )
 
-    ########### METRIQUES MODELE ###########
 
+########### METRIQUES MODELE ###########
+
+with st.sidebar:
     st.divider()
 
-    with st.container(border=True):
+    with st.container():
         st.subheader("🧠 Performance du modèle")
 
-    col1, col2 = st.columns(2)
+        col1, col2 = st.columns(2)
 
-    with col1:
-        st.metric(
-            label="MAE (erreur moyenne)",
-            value="4.72 tonnes"
-        )
-        st.caption("En moyenne, le modèle se trompe de 4.72 tonnes")
+        with col1:
+            st.metric("MAE", "4.72 t")
+            st.caption("Erreur moyenne")
 
-    with col2:
-        st.metric(
-            label="R² (explication des variations)",
-            value="85%"
-        )
-        st.caption("Le modèle explique 85% des variations du rendement")
+        with col2:
+            st.metric("R²", "85%")
+            st.caption("Variance expliquée")
