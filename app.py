@@ -358,12 +358,13 @@ if st.sidebar.button("Lancer la prédiction"):
 
 ########### RECEPTION DES REPONSES ############
 
-    response = requests.get(
-        f"{api_url}/predict",
-        params=payload
-    ).json()
+    # response = requests.get(
+    #     f"{api_url}/predict",
+    #     params=payload
+    # ).json()
 
-    st.json(response)
+    response = {'prediction':1000, 'reel': 1200}
+
 
     prediction = response["prediction"]
     reel = response["reel"]
@@ -371,6 +372,9 @@ if st.sidebar.button("Lancer la prédiction"):
 ########### AFFICHAGE RESULTATS ###########
 
     col1, col2 = st.columns(2)
+
+    diff = prediction - reel
+    erreur_pct = (diff / reel) * 100
 
     with col1:
         with st.container(border=True):
@@ -380,39 +384,29 @@ if st.sidebar.button("Lancer la prédiction"):
                 value=f"{prediction} tonnes"
             )
 
-    with col2:
         with st.container(border=True):
-            st.subheader("🌾 Réel")
+            st.subheader("🚜 Réel")
             st.metric(
                 label="Rendement observé",
                 value=f"{reel} tonnes"
             )
 
-    ########### ANALYSE ###########
-
-    diff = prediction - reel
-    erreur_pct = (diff / reel) * 100
-
-    st.divider()
-
-    with st.container(border=True):
-        st.subheader("📊 Analyse de la performance")
-
-    col1, col2 = st.columns(2)
-
-    with col1:
-        st.metric(
-            label="📉 Écart (Prédiction - Réel)",
-            value=f"{diff:.1f} tonnes",
-            delta=f"{erreur_pct:.1f}%"
-        )
-
     with col2:
-        st.metric(
-            label="📊 Erreur relative",
-            value=f"{abs(erreur_pct):.2f} %"
-        )
 
+        with st.container(border=True):
+
+            st.subheader("📊 Performance du modèle")
+
+            st.metric(
+                label="📉 Écart (Prédiction - Réel)",
+                value=f"{diff:.1f} tonnes",
+                delta=f"{erreur_pct:.1f}%"
+            )
+
+            st.metric(
+                label="📊 Erreur relative",
+                value=f"{abs(erreur_pct):.2f} %"
+            )
 
 ########### METRIQUES MODELE ###########
 
