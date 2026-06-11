@@ -1,0 +1,511 @@
+import streamlit as st
+
+
+import pandas as pd
+import requests
+import time
+
+'''
+# 🌾​ Ceres AI
+'''
+
+st.sidebar.write("")
+
+st.set_page_config(
+    page_title="Prediction Blé", # => Quick reference - Streamlit
+    page_icon="​🌾​",
+    layout="wide", # wide
+    initial_sidebar_state="auto") # collapsed
+
+st.markdown("""
+<style>
+
+/* Container des fées */
+.fairy {
+    position: fixed;
+    font-size: 70px;
+    z-index: 9999;
+    pointer-events: none;
+    animation-timing-function: linear;
+    animation-iteration-count: infinite;
+    animation-direction: alternate;
+    opacity: 1;
+}
+
+/* Animations */
+@keyframes fly1 {
+    0% {
+        transform: translate(-10vw, 90vh) rotate(0deg);
+    }
+    100% {
+        transform: translate(110vw, -10vh) rotate(360deg);
+    }
+}
+
+@keyframes fly2 {
+    0% {
+        transform: translate(100vw, 80vh) rotate(0deg);
+    }
+    100% {
+        transform: translate(-20vw, 10vh) rotate(-360deg);
+    }
+}
+
+@keyframes fly3 {
+    0% {
+        transform: translate(20vw, 100vh) rotate(0deg);
+    }
+    100% {
+        transform: translate(80vw, -20vh) rotate(360deg);
+    }
+}
+
+</style>
+
+<div class="fairy" style="
+    left:0%;
+    animation: fly1 18s linear infinite;
+">
+❄️
+</div>
+
+<div class="fairy" style="
+    left:20%;
+    animation: fly2 25s linear infinite;
+    font-size:40px;
+">
+☀️
+</div>
+
+<div class="fairy" style="
+    left:50%;
+    animation: fly3 20s linear infinite;
+">
+☁️
+</div>
+
+<div class="fairy" style="
+    left:70%;
+    animation: fly1 30s linear infinite;
+">
+🌪️
+</div>
+
+<div class="fairy" style="
+    left:90%;
+    animation: fly2 22s linear infinite;
+">
+⛈️
+</div>
+
+""", unsafe_allow_html=True)
+
+########### COUPLES(dept/annee) DISPO DANS X_test ###########
+
+couples = [{'DEPT_ID': 30, 'harvest_year': 2014},
+ {'DEPT_ID': 44, 'harvest_year': 2016},
+ {'DEPT_ID': 27, 'harvest_year': 2013},
+ {'DEPT_ID': 77, 'harvest_year': 2012},
+ {'DEPT_ID': 87, 'harvest_year': 2012},
+ {'DEPT_ID': 53, 'harvest_year': 2016},
+ {'DEPT_ID': 26, 'harvest_year': 2010},
+ {'DEPT_ID': 48, 'harvest_year': 2017},
+ {'DEPT_ID': 22, 'harvest_year': 2014},
+ {'DEPT_ID': 72, 'harvest_year': 2010},
+ {'DEPT_ID': 60, 'harvest_year': 2021},
+ {'DEPT_ID': 42, 'harvest_year': 2022},
+ {'DEPT_ID': 16, 'harvest_year': 2012},
+ {'DEPT_ID': 65, 'harvest_year': 2019},
+ {'DEPT_ID': 35, 'harvest_year': 2013},
+ {'DEPT_ID': 31, 'harvest_year': 2018},
+ {'DEPT_ID': 70, 'harvest_year': 2019},
+ {'DEPT_ID': 73, 'harvest_year': 2021},
+ {'DEPT_ID': 30, 'harvest_year': 2019},
+ {'DEPT_ID': 50, 'harvest_year': 2020},
+ {'DEPT_ID': 34, 'harvest_year': 2010},
+ {'DEPT_ID': 47, 'harvest_year': 2013},
+ {'DEPT_ID': 15, 'harvest_year': 2021},
+ {'DEPT_ID': 91, 'harvest_year': 2016},
+ {'DEPT_ID': 7, 'harvest_year': 2020},
+ {'DEPT_ID': 9, 'harvest_year': 2017},
+ {'DEPT_ID': 39, 'harvest_year': 2013},
+ {'DEPT_ID': 44, 'harvest_year': 2018},
+ {'DEPT_ID': 16, 'harvest_year': 2016},
+ {'DEPT_ID': 32, 'harvest_year': 2014},
+ {'DEPT_ID': 72, 'harvest_year': 2022},
+ {'DEPT_ID': 67, 'harvest_year': 2013},
+ {'DEPT_ID': 36, 'harvest_year': 2012},
+ {'DEPT_ID': 25, 'harvest_year': 2022},
+ {'DEPT_ID': 47, 'harvest_year': 2023},
+ {'DEPT_ID': 7, 'harvest_year': 2010},
+ {'DEPT_ID': 41, 'harvest_year': 2020},
+ {'DEPT_ID': 37, 'harvest_year': 2020},
+ {'DEPT_ID': 42, 'harvest_year': 2018},
+ {'DEPT_ID': 16, 'harvest_year': 2010},
+ {'DEPT_ID': 39, 'harvest_year': 2014},
+ {'DEPT_ID': 71, 'harvest_year': 2024},
+ {'DEPT_ID': 90, 'harvest_year': 2020},
+ {'DEPT_ID': 34, 'harvest_year': 2014},
+ {'DEPT_ID': 38, 'harvest_year': 2023},
+ {'DEPT_ID': 66, 'harvest_year': 2019},
+ {'DEPT_ID': 36, 'harvest_year': 2020},
+ {'DEPT_ID': 69, 'harvest_year': 2011},
+ {'DEPT_ID': 55, 'harvest_year': 2016},
+ {'DEPT_ID': 54, 'harvest_year': 2019},
+ {'DEPT_ID': 19, 'harvest_year': 2016},
+ {'DEPT_ID': 19, 'harvest_year': 2010},
+ {'DEPT_ID': 2, 'harvest_year': 2015},
+ {'DEPT_ID': 62, 'harvest_year': 2015},
+ {'DEPT_ID': 50, 'harvest_year': 2017},
+ {'DEPT_ID': 89, 'harvest_year': 2020},
+ {'DEPT_ID': 62, 'harvest_year': 2014},
+ {'DEPT_ID': 51, 'harvest_year': 2010},
+ {'DEPT_ID': 41, 'harvest_year': 2016},
+ {'DEPT_ID': 84, 'harvest_year': 2017},
+ {'DEPT_ID': 82, 'harvest_year': 2023},
+ {'DEPT_ID': 31, 'harvest_year': 2010},
+ {'DEPT_ID': 55, 'harvest_year': 2021},
+ {'DEPT_ID': 77, 'harvest_year': 2014},
+ {'DEPT_ID': 7, 'harvest_year': 2011},
+ {'DEPT_ID': 18, 'harvest_year': 2018},
+ {'DEPT_ID': 4, 'harvest_year': 2013},
+ {'DEPT_ID': 30, 'harvest_year': 2013},
+ {'DEPT_ID': 36, 'harvest_year': 2014},
+ {'DEPT_ID': 95, 'harvest_year': 2024},
+ {'DEPT_ID': 59, 'harvest_year': 2022},
+ {'DEPT_ID': 66, 'harvest_year': 2011},
+ {'DEPT_ID': 56, 'harvest_year': 2024},
+ {'DEPT_ID': 49, 'harvest_year': 2013},
+ {'DEPT_ID': 5, 'harvest_year': 2021},
+ {'DEPT_ID': 7, 'harvest_year': 2013},
+ {'DEPT_ID': 27, 'harvest_year': 2017},
+ {'DEPT_ID': 38, 'harvest_year': 2018},
+ {'DEPT_ID': 33, 'harvest_year': 2020},
+ {'DEPT_ID': 5, 'harvest_year': 2018},
+ {'DEPT_ID': 46, 'harvest_year': 2021},
+ {'DEPT_ID': 12, 'harvest_year': 2010},
+ {'DEPT_ID': 83, 'harvest_year': 2023},
+ {'DEPT_ID': 48, 'harvest_year': 2015},
+ {'DEPT_ID': 61, 'harvest_year': 2016},
+ {'DEPT_ID': 21, 'harvest_year': 2016},
+ {'DEPT_ID': 85, 'harvest_year': 2010},
+ {'DEPT_ID': 95, 'harvest_year': 2019},
+ {'DEPT_ID': 95, 'harvest_year': 2020},
+ {'DEPT_ID': 59, 'harvest_year': 2017},
+ {'DEPT_ID': 7, 'harvest_year': 2017},
+ {'DEPT_ID': 3, 'harvest_year': 2012},
+ {'DEPT_ID': 88, 'harvest_year': 2018},
+ {'DEPT_ID': 49, 'harvest_year': 2023},
+ {'DEPT_ID': 52, 'harvest_year': 2015},
+ {'DEPT_ID': 68, 'harvest_year': 2023},
+ {'DEPT_ID': 39, 'harvest_year': 2022},
+ {'DEPT_ID': 10, 'harvest_year': 2013},
+ {'DEPT_ID': 40, 'harvest_year': 2012},
+ {'DEPT_ID': 61, 'harvest_year': 2011},
+ {'DEPT_ID': 86, 'harvest_year': 2019},
+ {'DEPT_ID': 37, 'harvest_year': 2011},
+ {'DEPT_ID': 39, 'harvest_year': 2015},
+ {'DEPT_ID': 35, 'harvest_year': 2014},
+ {'DEPT_ID': 3, 'harvest_year': 2020},
+ {'DEPT_ID': 29, 'harvest_year': 2016},
+ {'DEPT_ID': 77, 'harvest_year': 2016},
+ {'DEPT_ID': 63, 'harvest_year': 2021},
+ {'DEPT_ID': 54, 'harvest_year': 2020},
+ {'DEPT_ID': 50, 'harvest_year': 2022},
+ {'DEPT_ID': 63, 'harvest_year': 2018},
+ {'DEPT_ID': 44, 'harvest_year': 2021},
+ {'DEPT_ID': 16, 'harvest_year': 2015},
+ {'DEPT_ID': 28, 'harvest_year': 2020},
+ {'DEPT_ID': 78, 'harvest_year': 2020},
+ {'DEPT_ID': 23, 'harvest_year': 2023},
+ {'DEPT_ID': 7, 'harvest_year': 2016},
+ {'DEPT_ID': 51, 'harvest_year': 2023},
+ {'DEPT_ID': 78, 'harvest_year': 2024},
+ {'DEPT_ID': 21, 'harvest_year': 2018},
+ {'DEPT_ID': 73, 'harvest_year': 2024},
+ {'DEPT_ID': 50, 'harvest_year': 2015},
+ {'DEPT_ID': 79, 'harvest_year': 2024},
+ {'DEPT_ID': 89, 'harvest_year': 2016},
+ {'DEPT_ID': 32, 'harvest_year': 2024},
+ {'DEPT_ID': 94, 'harvest_year': 2017},
+ {'DEPT_ID': 72, 'harvest_year': 2021},
+ {'DEPT_ID': 10, 'harvest_year': 2024},
+ {'DEPT_ID': 43, 'harvest_year': 2012},
+ {'DEPT_ID': 34, 'harvest_year': 2021},
+ {'DEPT_ID': 3, 'harvest_year': 2018},
+ {'DEPT_ID': 54, 'harvest_year': 2017},
+ {'DEPT_ID': 54, 'harvest_year': 2012},
+ {'DEPT_ID': 24, 'harvest_year': 2012},
+ {'DEPT_ID': 4, 'harvest_year': 2012},
+ {'DEPT_ID': 79, 'harvest_year': 2010},
+ {'DEPT_ID': 8, 'harvest_year': 2022},
+ {'DEPT_ID': 65, 'harvest_year': 2012},
+ {'DEPT_ID': 61, 'harvest_year': 2010},
+ {'DEPT_ID': 58, 'harvest_year': 2011},
+ {'DEPT_ID': 2, 'harvest_year': 2016},
+ {'DEPT_ID': 10, 'harvest_year': 2017},
+ {'DEPT_ID': 87, 'harvest_year': 2022},
+ {'DEPT_ID': 86, 'harvest_year': 2014},
+ {'DEPT_ID': 49, 'harvest_year': 2019},
+ {'DEPT_ID': 93, 'harvest_year': 2022},
+ {'DEPT_ID': 13, 'harvest_year': 2019},
+ {'DEPT_ID': 23, 'harvest_year': 2020},
+ {'DEPT_ID': 50, 'harvest_year': 2023},
+ {'DEPT_ID': 94, 'harvest_year': 2015},
+ {'DEPT_ID': 49, 'harvest_year': 2021},
+ {'DEPT_ID': 21, 'harvest_year': 2021},
+ {'DEPT_ID': 16, 'harvest_year': 2018},
+ {'DEPT_ID': 47, 'harvest_year': 2014},
+ {'DEPT_ID': 79, 'harvest_year': 2022},
+ {'DEPT_ID': 43, 'harvest_year': 2010},
+ {'DEPT_ID': 66, 'harvest_year': 2018},
+ {'DEPT_ID': 45, 'harvest_year': 2017},
+ {'DEPT_ID': 26, 'harvest_year': 2016},
+ {'DEPT_ID': 85, 'harvest_year': 2014},
+ {'DEPT_ID': 15, 'harvest_year': 2018},
+ {'DEPT_ID': 3, 'harvest_year': 2022},
+ {'DEPT_ID': 26, 'harvest_year': 2018},
+ {'DEPT_ID': 32, 'harvest_year': 2019},
+ {'DEPT_ID': 4, 'harvest_year': 2023},
+ {'DEPT_ID': 47, 'harvest_year': 2012},
+ {'DEPT_ID': 1, 'harvest_year': 2024},
+ {'DEPT_ID': 84, 'harvest_year': 2015},
+ {'DEPT_ID': 21, 'harvest_year': 2012},
+ {'DEPT_ID': 21, 'harvest_year': 2017},
+ {'DEPT_ID': 76, 'harvest_year': 2014},
+ {'DEPT_ID': 83, 'harvest_year': 2013},
+ {'DEPT_ID': 63, 'harvest_year': 2016},
+ {'DEPT_ID': 28, 'harvest_year': 2022},
+ {'DEPT_ID': 8, 'harvest_year': 2016},
+ {'DEPT_ID': 12, 'harvest_year': 2012},
+ {'DEPT_ID': 43, 'harvest_year': 2024},
+ {'DEPT_ID': 29, 'harvest_year': 2019},
+ {'DEPT_ID': 57, 'harvest_year': 2016},
+ {'DEPT_ID': 54, 'harvest_year': 2013},
+ {'DEPT_ID': 34, 'harvest_year': 2016},
+ {'DEPT_ID': 45, 'harvest_year': 2014},
+ {'DEPT_ID': 69, 'harvest_year': 2022},
+ {'DEPT_ID': 50, 'harvest_year': 2013},
+ {'DEPT_ID': 66, 'harvest_year': 2023},
+ {'DEPT_ID': 83, 'harvest_year': 2016},
+ {'DEPT_ID': 16, 'harvest_year': 2024},
+ {'DEPT_ID': 43, 'harvest_year': 2022},
+ {'DEPT_ID': 69, 'harvest_year': 2013},
+ {'DEPT_ID': 47, 'harvest_year': 2010},
+ {'DEPT_ID': 4, 'harvest_year': 2024},
+ {'DEPT_ID': 76, 'harvest_year': 2012},
+ {'DEPT_ID': 49, 'harvest_year': 2016},
+ {'DEPT_ID': 7, 'harvest_year': 2023},
+ {'DEPT_ID': 11, 'harvest_year': 2023},
+ {'DEPT_ID': 19, 'harvest_year': 2020},
+ {'DEPT_ID': 62, 'harvest_year': 2023},
+ {'DEPT_ID': 4, 'harvest_year': 2010},
+ {'DEPT_ID': 10, 'harvest_year': 2011},
+ {'DEPT_ID': 50, 'harvest_year': 2024},
+ {'DEPT_ID': 54, 'harvest_year': 2022},
+ {'DEPT_ID': 22, 'harvest_year': 2024},
+ {'DEPT_ID': 34, 'harvest_year': 2013},
+ {'DEPT_ID': 35, 'harvest_year': 2012},
+ {'DEPT_ID': 26, 'harvest_year': 2024},
+ {'DEPT_ID': 85, 'harvest_year': 2022},
+ {'DEPT_ID': 67, 'harvest_year': 2023},
+ {'DEPT_ID': 85, 'harvest_year': 2024},
+ {'DEPT_ID': 25, 'harvest_year': 2016},
+ {'DEPT_ID': 57, 'harvest_year': 2011},
+ {'DEPT_ID': 80, 'harvest_year': 2017},
+ {'DEPT_ID': 57, 'harvest_year': 2015},
+ {'DEPT_ID': 70, 'harvest_year': 2014},
+ {'DEPT_ID': 65, 'harvest_year': 2016},
+ {'DEPT_ID': 27, 'harvest_year': 2011},
+ {'DEPT_ID': 5, 'harvest_year': 2014},
+ {'DEPT_ID': 15, 'harvest_year': 2017},
+ {'DEPT_ID': 63, 'harvest_year': 2011},
+ {'DEPT_ID': 3, 'harvest_year': 2024},
+ {'DEPT_ID': 12, 'harvest_year': 2019},
+ {'DEPT_ID': 34, 'harvest_year': 2024},
+ {'DEPT_ID': 3, 'harvest_year': 2021},
+ {'DEPT_ID': 59, 'harvest_year': 2019},
+ {'DEPT_ID': 12, 'harvest_year': 2014},
+ {'DEPT_ID': 78, 'harvest_year': 2019},
+ {'DEPT_ID': 80, 'harvest_year': 2010},
+ {'DEPT_ID': 57, 'harvest_year': 2012},
+ {'DEPT_ID': 76, 'harvest_year': 2020},
+ {'DEPT_ID': 54, 'harvest_year': 2024},
+ {'DEPT_ID': 8, 'harvest_year': 2023},
+ {'DEPT_ID': 78, 'harvest_year': 2022},
+ {'DEPT_ID': 10, 'harvest_year': 2010},
+ {'DEPT_ID': 48, 'harvest_year': 2021},
+ {'DEPT_ID': 59, 'harvest_year': 2012},
+ {'DEPT_ID': 60, 'harvest_year': 2020},
+ {'DEPT_ID': 30, 'harvest_year': 2023},
+ {'DEPT_ID': 14, 'harvest_year': 2021},
+ {'DEPT_ID': 43, 'harvest_year': 2018},
+ {'DEPT_ID': 67, 'harvest_year': 2012},
+ {'DEPT_ID': 16, 'harvest_year': 2014},
+ {'DEPT_ID': 44, 'harvest_year': 2017},
+ {'DEPT_ID': 4, 'harvest_year': 2019},
+ {'DEPT_ID': 65, 'harvest_year': 2010},
+ {'DEPT_ID': 76, 'harvest_year': 2023},
+ {'DEPT_ID': 35, 'harvest_year': 2018},
+ {'DEPT_ID': 1, 'harvest_year': 2020},
+ {'DEPT_ID': 64, 'harvest_year': 2014},
+ {'DEPT_ID': 76, 'harvest_year': 2015},
+ {'DEPT_ID': 48, 'harvest_year': 2013},
+ {'DEPT_ID': 6, 'harvest_year': 2016},
+ {'DEPT_ID': 47, 'harvest_year': 2015},
+ {'DEPT_ID': 15, 'harvest_year': 2012},
+ {'DEPT_ID': 52, 'harvest_year': 2023},
+ {'DEPT_ID': 9, 'harvest_year': 2014},
+ {'DEPT_ID': 94, 'harvest_year': 2020},
+ {'DEPT_ID': 39, 'harvest_year': 2012},
+ {'DEPT_ID': 56, 'harvest_year': 2010},
+ {'DEPT_ID': 12, 'harvest_year': 2011},
+ {'DEPT_ID': 57, 'harvest_year': 2019},
+ {'DEPT_ID': 88, 'harvest_year': 2022},
+ {'DEPT_ID': 91, 'harvest_year': 2013},
+ {'DEPT_ID': 68, 'harvest_year': 2017},
+ {'DEPT_ID': 82, 'harvest_year': 2014},
+ {'DEPT_ID': 4, 'harvest_year': 2018},
+ {'DEPT_ID': 51, 'harvest_year': 2020},
+ {'DEPT_ID': 77, 'harvest_year': 2013},
+ {'DEPT_ID': 71, 'harvest_year': 2020},
+ {'DEPT_ID': 66, 'harvest_year': 2015},
+ {'DEPT_ID': 7, 'harvest_year': 2024},
+ {'DEPT_ID': 81, 'harvest_year': 2021},
+ {'DEPT_ID': 9, 'harvest_year': 2024},
+ {'DEPT_ID': 91, 'harvest_year': 2022},
+ {'DEPT_ID': 81, 'harvest_year': 2016},
+ {'DEPT_ID': 48, 'harvest_year': 2016},
+ {'DEPT_ID': 33, 'harvest_year': 2016}]
+
+# df_couples contient les couples disponibles
+df_couples = pd.DataFrame(couples)
+
+# Années disponibles
+annees = sorted(df_couples["harvest_year"].unique())
+
+
+########### SIDE BAR ###############
+
+########### COULEUR ###############
+
+st.markdown("""
+<style>
+[data-testid="stSidebar"] {
+    background-color: #FAF3DD;
+}
+</style>
+""", unsafe_allow_html=True)
+
+########### TITLE #################
+
+st.sidebar.markdown("""
+    # Sélection des données 🔍
+
+    ### Sélectionnez un département et une année pour lancer une prédiction.
+""")
+
+st.sidebar.write("")
+
+########### SELECT BOXES ###########
+
+annee = st.sidebar.selectbox(
+    "📅​ Choisis une année",
+    options=annees
+)
+
+# Départements disponibles pour l'année choisie
+departements = sorted(
+    df_couples.loc[
+        df_couples["harvest_year"] == annee,
+        "DEPT_ID"
+    ].unique()
+)
+
+departement = st.sidebar.selectbox(
+    "🇫🇷​ Choisis un département",
+    options=departements
+)
+
+st.sidebar.write("")
+
+########### ENVOIE DE LA REQUETE A L'API ############
+
+api_url = st.secrets["API_URL"]
+
+if st.sidebar.button("Lancer la prédiction"):
+    payload = {
+        "DEPT_ID": departement,
+        "harvest_year": int(annee)
+    }
+
+########### RECEPTION DES REPONSES ############
+
+    response = requests.get(
+        f"{api_url}/predict",
+        params=payload
+    ).json()
+
+    # response = {'prediction':1000, 'reel': 1200}
+
+    st.json(response)
+
+    prediction = response["prediction"]
+    reel = response["reel"]
+
+########### AFFICHAGE RESULTATS ###########
+
+    col1, col2 = st.columns(2)
+
+    diff = prediction - reel
+    erreur_pct = (diff / reel) * 100
+
+    with col1:
+        with st.container(border=True):
+            st.subheader("🔮 Prédiction")
+            st.metric(
+                label="Rendement estimé",
+                value=f"{prediction:.2f} quintaux/ha"
+            )
+
+        with st.container(border=True):
+            st.subheader("🚜 Réel")
+            st.metric(
+                label="Rendement observé",
+                value=f"{reel} quintaux/ha"
+            )
+
+    with col2:
+
+        with st.container(border=True):
+
+            st.subheader("📊 Performance du modèle")
+
+            st.metric(
+                label="📉 Écart (Prédiction - Réel)",
+                value=f"{diff:.1f} tonnes",
+                delta=f"{erreur_pct:.1f}%"
+            )
+
+            st.metric(
+                label="📊 Erreur relative",
+                value=f"{abs(erreur_pct):.2f} %"
+            )
+
+########### METRIQUES MODELE ###########
+
+with st.sidebar:
+    st.divider()
+
+    with st.container():
+        st.subheader("🧠 Performance du modèle")
+
+        col1, col2 = st.columns(2)
+
+        with col1:
+            st.metric("MAE", "4.72 t")
+            st.caption("Erreur moyenne")
+
+        with col2:
+            st.metric("R²", "85%")
+            st.caption("Variance expliquée")
