@@ -1,6 +1,3 @@
-import base64
-from pathlib import Path
-
 import requests
 import streamlit as st
 import plotly.graph_objects as go
@@ -13,214 +10,169 @@ GEOJSON_URL = (
     "master/departements-version-simplifiee.geojson"
 )
 EXCLUDED_DEPTS = {"2A", "2B"}  # Corse — hors périmètre démo
-BACKGROUND_FILE = Path(__file__).parent / "ceres_fond.png"
-
-CERES_ICON_SVG = (
-    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" style="height:0.9em;width:auto;vertical-align:-0.08em;margin-right:0.15em;"><g stroke="#1B4332" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M32 56V14"/><path d="M32 18c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 26c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 34c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 42c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 18c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 26c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 34c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 42c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 56c-6-2-10-6-12-12"/></g></svg>'
-)
 
 ########### PAGE CONFIG (premier appel st.*) ###########
 
-_ICON_FILE = Path(__file__).parent / "ceres_icon.png"
 st.set_page_config(
     page_title="Ceres AI · Récolte 2025",
-    page_icon=str(_ICON_FILE) if _ICON_FILE.exists() else "🌾",
+    page_icon="🌾",
     layout="wide",
     initial_sidebar_state="collapsed",
 )
 
-########### FOND — CERES EN FILIGRANE ###########
-
-
-@st.cache_data
-def load_background_css() -> str:
-    """Encode le PNG filigrane en base64 et le pose en fond fixe, pleine page (contain), voilé de blanc."""
-    if not BACKGROUND_FILE.exists():
-        return ""
-    b64 = base64.b64encode(BACKGROUND_FILE.read_bytes()).decode()
-    return f"""
-.stApp {{
-    background-image:
-        linear-gradient(rgba(250,250,248,0.78), rgba(250,250,248,0.78)),
-        url("data:image/png;base64,{b64}");
-    background-repeat: no-repeat, no-repeat;
-    background-position: center center, center center;
-    background-attachment: fixed, fixed;
-    background-size: cover, contain;
-}}
-.stApp::before {{
-    content: "";
-    position: fixed;
-    inset: 0;
-    background: rgba(255,255,255,0.45);
-    z-index: 0;
-    pointer-events: none;
-}}
-.main .block-container {{ position: relative; z-index: 1; }}
-"""
-
-
 ########### CSS — Ceres Light ###########
 
-CERES_CSS = f"""
+CERES_CSS = """
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Fraunces:wght@600;700&family=DM+Sans:wght@400;500;700&display=swap');
 
 /* ── page ── */
-.stApp {{ background-color: #FAFAF8; }}
-{load_background_css()}
-.main .block-container {{
-    max-width: 1280px;
+.stApp { background: #FAFAF8; }
+.main .block-container {
+    max-width: 1180px;
     padding-top: 2.2rem;
     font-family: 'DM Sans', sans-serif;
     color: #1B4332;
-}}
-#MainMenu, footer, header {{ visibility: hidden; }}
+}
+#MainMenu, footer, header { visibility: hidden; }
 
 /* ── hero ── */
-p.ceres-hero, .ceres-hero {{
-    font-family: 'Fraunces', serif !important;
-    font-size: clamp(2.6rem, 5vw, 4.2rem) !important;
-    font-weight: 700 !important;
-    letter-spacing: -2px !important;
-    color: #1B4332 !important;
-    text-align: center !important;
-    margin-bottom: 0.3rem !important;
-    line-height: 1.05 !important;
-    text-shadow: 0 1px 0 rgba(250,250,248,0.9);
-}}
-.ceres-sub {{
-    font-size: 1.7rem;
+.ceres-hero {
+    font-family: 'Fraunces', serif;
+    font-size: 3.6rem;
+    font-weight: 700;
+    letter-spacing: -1px;
+    color: #1B4332;
+    text-align: center;
+    margin-bottom: 0.3rem;
+}
+.ceres-sub {
+    font-size: 1.35rem;
     color: #6B7B6E;
     text-align: center;
     margin-bottom: 1rem;
-}}
+}
 
 /* ── millésime — étiquette éditoriale, pas un filtre ── */
-.ceres-season {{
+.ceres-season {
     display: flex;
     align-items: center;
     justify-content: center;
     gap: 1rem;
     margin-bottom: 1.6rem;
-}}
+}
 .ceres-season::before,
-.ceres-season::after {{
+.ceres-season::after {
     content: "";
     height: 1px;
-    width: 88px;
+    width: 72px;
     background: linear-gradient(90deg, transparent, #C9A961, transparent);
-}}
-.ceres-season-text {{
+}
+.ceres-season-text {
     font-family: 'Fraunces', serif;
-    font-size: 1.2rem;
+    font-size: 0.95rem;
     font-weight: 600;
     font-style: italic;
     letter-spacing: 0.22em;
     text-transform: uppercase;
     color: #B08D3E;
     white-space: nowrap;
-}}
+}
 
 /* ── hint vide ── */
-.ceres-hint {{
+.ceres-hint {
     text-align: center;
     color: #6B7B6E;
     font-size: 0.95rem;
     margin: 0.6rem 0 0.2rem;
-}}
+}
 
 /* ── map container ── */
-[data-testid="stPlotlyChart"] {{
+[data-testid="stPlotlyChart"] {
     border-radius: 12px;
     overflow: hidden;
     border: 1px solid #ECE9DF;
-    background: rgba(250, 250, 248, 0.72);
-}}
+}
 
 /* ── floating result card ── */
-.ceres-card {{
+.ceres-card {
     position: fixed;
     right: 2.2rem;
     bottom: 2.2rem;
     z-index: 999;
-    width: 400px;
-    box-sizing: border-box;
+    width: 380px;
     background: #FFFFFF;
     border: 1.5px solid #FAF3DD;
-    border-radius: 22px;
-    padding: 2rem 2.2rem;
+    border-radius: 20px;
+    padding: 1.8rem 2rem;
     box-shadow: 0 12px 44px rgba(27,67,50,0.22);
     animation: ceres-rise 0.35s cubic-bezier(.2,.8,.3,1);
-    overflow-wrap: break-word;
-}}
-@keyframes ceres-rise {{
-    from {{ opacity: 0; transform: translateY(14px); }}
-    to   {{ opacity: 1; transform: translateY(0); }}
-}}
-.ceres-card-dept {{
+}
+@keyframes ceres-rise {
+    from { opacity: 0; transform: translateY(14px); }
+    to   { opacity: 1; transform: translateY(0); }
+}
+.ceres-card-dept {
     font-family: 'Fraunces', serif;
-    font-size: 1.9rem;
+    font-size: 1.55rem;
     font-weight: 600;
     color: #1B4332;
-    line-height: 1.1;
-}}
-.ceres-card-badge {{
-    font-size: 1rem;
+}
+.ceres-card-badge {
+    font-size: 0.82rem;
     color: #B08D3E;
     text-transform: uppercase;
     letter-spacing: 0.14em;
-    margin-bottom: 1.2rem;
-}}
-.ceres-metric-label {{ font-size: 1.25rem; color: #6B7B6E; margin: 0.8rem 0 0; }}
-.ceres-metric-value {{
-    font-size: 1.9rem !important;
-    font-weight: 700 !important;
+    margin-bottom: 1rem;
+}
+.ceres-metric-label { font-size: 0.95rem; color: #6B7B6E; margin: 0.6rem 0 0; }
+.ceres-metric-value {
+    font-size: 2.3rem;
+    font-weight: 700;
     font-variant-numeric: tabular-nums;
-    line-height: 1.15 !important;
-}}
-.ceres-metric-value--pred {{ color: #40916C; }}
-.ceres-metric-value--reel {{ color: #D4A373; }}
-.ceres-metric-value--ecart {{ color: #1B4332; font-size: 1.6rem !important; }}
-.ceres-unit {{ font-size: 1.9rem; font-weight: 400; color: #6B7B6E; }}
-.ceres-metric-value--ecart .ceres-unit {{ font-size: 1.6rem; }}
+    line-height: 1.15;
+}
+.ceres-metric-value--pred { color: #40916C; }
+.ceres-metric-value--reel { color: #D4A373; }
+.ceres-metric-value--ecart { color: #1B4332; font-size: 1.5rem; }
+.ceres-unit { font-size: 1rem; font-weight: 400; color: #6B7B6E; }
 
 /* ── comparison bars ── */
-.ceres-bar-track {{
+.ceres-bar-track {
     background: #F1EFE7;
-    border-radius: 8px;
-    height: 20px;
-    margin: 0.5rem 0 0.25rem;
+    border-radius: 7px;
+    height: 16px;
+    margin: 0.4rem 0 0.2rem;
     overflow: hidden;
-}}
-.ceres-bar-pred, .ceres-bar-reel {{
+}
+.ceres-bar-pred, .ceres-bar-reel {
     height: 100%;
-    border-radius: 8px;
+    border-radius: 7px;
     transition: width 0.6s cubic-bezier(.2,.8,.3,1);
-}}
-.ceres-bar-pred {{ background: #40916C; }}
-.ceres-bar-reel {{ background: #D4A373; }}
-.ceres-bar-caption {{ font-size: 1rem; color: #6B7B6E; }}
+}
+.ceres-bar-pred { background: #40916C; }
+.ceres-bar-reel { background: #D4A373; }
+.ceres-bar-caption { font-size: 0.82rem; color: #6B7B6E; }
 
 /* ── footer ── */
-.ceres-footer {{
+.ceres-footer {
     text-align: center;
     color: #6B7B6E;
     font-size: 0.75rem;
     margin-top: 2rem;
-}}
+}
 
 /* ── mobile : carte flottante → bloc sous la carte ── */
-@media (max-width: 900px) {{
-    .ceres-card {{
+@media (max-width: 900px) {
+    .ceres-card {
         position: static;
         width: 100%;
         margin-top: 1rem;
         animation: none;
-    }}
-    .ceres-sub {{ font-size: 1.25rem; }}
-    .ceres-metric-value {{ font-size: 2.8rem; }}
-}}
+    }
+    .ceres-hero { font-size: 2.4rem; }
+    .ceres-sub { font-size: 1.1rem; }
+}
 </style>
 """
 st.markdown(CERES_CSS, unsafe_allow_html=True)
@@ -296,7 +248,7 @@ def norm_dept(code):
 ########### SIDEBAR — ANCRES DE CONFIANCE ###########
 
 with st.sidebar:
-    st.markdown("### Ceres AI")
+    st.markdown("### 🌾 Ceres AI")
     st.markdown(
         '<div class="ceres-season" style="justify-content:flex-start">'
         '<span class="ceres-season-text">Récolte 2025</span></div>',
@@ -323,10 +275,7 @@ with st.sidebar:
 
 ########### HERO ###########
 
-st.markdown(
-    '<p class="ceres-hero">' + CERES_ICON_SVG + 'Ceres AI</p>',
-    unsafe_allow_html=True,
-)
+st.markdown('<p class="ceres-hero">🌾 Ceres AI</p>', unsafe_allow_html=True)
 st.markdown(
     '<p class="ceres-sub">Prédiction du rendement de blé tendre par département</p>',
     unsafe_allow_html=True,
@@ -430,9 +379,9 @@ fig.update_geos(
     projection_type="mercator",
 )
 fig.update_layout(
-    height=720,
+    height=560,
     margin=dict(l=0, r=0, t=0, b=0),
-    paper_bgcolor="rgba(0,0,0,0)",
+    paper_bgcolor="#FAFAF8",
     dragmode=False,
     font=dict(family="DM Sans, sans-serif", color="#1B4332"),
 )
