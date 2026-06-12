@@ -15,6 +15,10 @@ GEOJSON_URL = (
 EXCLUDED_DEPTS = {"2A", "2B"}  # Corse — hors périmètre démo
 BACKGROUND_FILE = Path(__file__).parent / "ceres_fond.png"
 
+CERES_ICON_SVG = (
+    '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none" style="height:0.9em;width:auto;vertical-align:-0.08em;margin-right:0.15em;"><g stroke="#1B4332" stroke-width="2.6" stroke-linecap="round" stroke-linejoin="round"><path d="M32 56V14"/><path d="M32 18c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 26c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 34c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 42c-6 0-10-4-10-10 6 0 10 4 10 10Z"/><path d="M32 18c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 26c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 34c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 42c6 0 10-4 10-10-6 0-10 4-10 10Z"/><path d="M32 56c-6-2-10-6-12-12"/></g></svg>'
+)
+
 ########### PAGE CONFIG (premier appel st.*) ###########
 
 _ICON_FILE = Path(__file__).parent / "ceres_icon.png"
@@ -292,7 +296,7 @@ def norm_dept(code):
 ########### SIDEBAR — ANCRES DE CONFIANCE ###########
 
 with st.sidebar:
-    st.markdown("### 🌾 Ceres AI")
+    st.markdown("### Ceres AI")
     st.markdown(
         '<div class="ceres-season" style="justify-content:flex-start">'
         '<span class="ceres-season-text">Récolte 2025</span></div>',
@@ -319,7 +323,10 @@ with st.sidebar:
 
 ########### HERO ###########
 
-st.markdown('<p class="ceres-hero">🌾 Ceres AI</p>', unsafe_allow_html=True)
+st.markdown(
+    '<p class="ceres-hero">' + CERES_ICON_SVG + 'Ceres AI</p>',
+    unsafe_allow_html=True,
+)
 st.markdown(
     '<p class="ceres-sub">Prédiction du rendement de blé tendre par département</p>',
     unsafe_allow_html=True,
